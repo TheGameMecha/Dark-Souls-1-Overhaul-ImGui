@@ -13,3 +13,6 @@
 	path = OverhaulDLL/lib/ggpo_steamapi
 	url = https://github.com/metal-crow/ggpo_steamapi.git
 	branch = SteamNet
+[submodule "OverhaulDLL/lib/imgui"]
+	path = OverhaulDLL/lib/imgui
+	url = https://github.com/ocornut/imgui.git
