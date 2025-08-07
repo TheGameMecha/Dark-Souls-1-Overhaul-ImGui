@@ -31,6 +31,8 @@
 #include "Rollback.h"
 #include "PlayerVisualsValidationFix.h"
 #include "ServerMonitor.h"
+#include "ImGui.h"
+#include "RenderHook.h"
 
 HMODULE d3d11_module;
 FILE* logfile = NULL;
@@ -101,7 +103,7 @@ BOOL on_process_attach(HMODULE h_module, LPVOID lp_reserved)
     ConsoleWrite("%s\n\n",DS1_OVERHAUL_TXT_INTRO);
     d3d11_module = h_module;
 
-    Game::init();
+    Game::Initialize();
     AntiAntiCheat::start();
 #ifndef ANTIBAN_ONLY
     Game::injections_init(); //only do injections after we disable the built in code checking
@@ -133,6 +135,8 @@ BOOL on_process_attach(HMODULE h_module, LPVOID lp_reserved)
 
     // start callback handler
     MainLoop::start();
+
+    RenderHook::Initialize();
 
 #ifndef DEBUG
     set_crash_handlers();
@@ -189,6 +193,7 @@ DWORD WINAPI on_process_attach_async(LPVOID lpParam)
 BOOL on_process_detach(HMODULE h_module, LPVOID lp_reserved)
 {
     // Exit tasks should be performed here
+    RenderHook::Shutdown();
     return TRUE;
 }
 

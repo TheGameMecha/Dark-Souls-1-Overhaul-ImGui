@@ -35,6 +35,7 @@ std::vector<std::string> Mod::authors = {
     "Graham",
     "ChurchGuard",
     "Relinquished001",
+    "TheGameMecha",
     // Apologies in advance to anyone I forgot, just let me know so I can add you to the list
     //     -Sean
 };

@@ -163,7 +163,7 @@ int Game::node_count = -1;
 
 
 // Initializes pointers and base addresses required for most other functions
-void Game::init()
+void Game::Initialize()
 {
     ConsoleWrite("Initializing pointers...");
 
