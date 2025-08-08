@@ -11,7 +11,6 @@
 #include "sp/memory/injection/asm/x64.h"
 #include "ModNetworking.h"
 #include "Rollback.h"
-#include "ImGui.h"
 
 namespace Input {
 
@@ -129,13 +128,6 @@ static uint8_t keyboard_old_state[256];
 void intercept_IDirectInputDevice8GetDeviceState_Keyboard(LPVOID lpvData)
 {
     uint8_t* data = (uint8_t*)lpvData;
-
-    if (ImGuiImpl::WantCaptureInput())
-    {
-        ZeroMemory(data, 256);
-        return; // ImGui has request input capture, so pretend everything is fine
-    }
-
     handle_input(NULL, NULL, NULL, NULL, keyboard_old_state, data, true, 0);
     memcpy(keyboard_old_state, data, 256);
 }
@@ -145,11 +137,6 @@ static DIJOYSTATE2 DIJOYSTATE2_old_state;
 void intercept_IDirectInputDevice8GetDeviceState_DIJOYSTATE2(LPVOID lpvData)
 {
     DIJOYSTATE2 * data = (DIJOYSTATE2*)lpvData;
-    if (ImGuiImpl::WantCaptureInput())
-    {
-        ZeroMemory(data, sizeof(DIJOYSTATE2));
-        return;
-    }
     handle_input(NULL, NULL, &DIJOYSTATE2_old_state, data, NULL, NULL, true, 0);
     DIJOYSTATE2_old_state = *data;
 }
@@ -161,12 +148,6 @@ DWORD WINAPI intercept_xinput_get_state(DWORD dwUserIndex, XINPUT_STATE *pState)
     static XINPUT_GAMEPAD old_state[4];
     // Call original function
     DWORD result = XInputGetState(dwUserIndex, pState);
-
-    if (ImGuiImpl::WantCaptureInput())
-    {
-        ZeroMemory(&pState->Gamepad, sizeof(XINPUT_GAMEPAD));
-        return ERROR_SUCCESS; // ImGui has request input capture, so pretend everything is fine
-    }
 
     switch (result) {
         case ERROR_SUCCESS:

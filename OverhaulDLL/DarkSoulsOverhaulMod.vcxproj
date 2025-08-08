@@ -60,7 +60,6 @@
     <ClCompile Include="src\InputUtil.cpp" />
     <ClCompile Include="src\PlayerInsStructFunctions.cpp" />
     <ClCompile Include="src\PlayerVisualsValidationFix.cpp" />
-    <ClCompile Include="src\RenderHook.cpp" />
     <ClCompile Include="src\Rollback.cpp" />
     <ClCompile Include="src\ServerMonitor.cpp" />
     <ClCompile Include="src\SfxManStructFunctions.cpp" />
@@ -101,7 +100,6 @@
     <ClInclude Include="include\PadManipulatorStructFunctions.h" />
     <ClInclude Include="include\PlayerInsStructFunctions.h" />
     <ClInclude Include="include\PlayerVisualsValidationFix.h" />
-    <ClInclude Include="include\RenderHook.h" />
     <ClInclude Include="include\Rollback.h" />
     <ClInclude Include="include\PlayerInsStruct.h" />
     <ClInclude Include="include\ServerMonitor.h" />

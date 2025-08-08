@@ -32,7 +32,6 @@
 #include "PlayerVisualsValidationFix.h"
 #include "ServerMonitor.h"
 #include "ImGui.h"
-#include "RenderHook.h"
 
 HMODULE d3d11_module;
 FILE* logfile = NULL;
@@ -136,7 +135,7 @@ BOOL on_process_attach(HMODULE h_module, LPVOID lp_reserved)
     // start callback handler
     MainLoop::start();
 
-    RenderHook::Initialize();
+    ImGuiImpl::Initialize();
 
 #ifndef DEBUG
     set_crash_handlers();
@@ -193,7 +192,7 @@ DWORD WINAPI on_process_attach_async(LPVOID lpParam)
 BOOL on_process_detach(HMODULE h_module, LPVOID lp_reserved)
 {
     // Exit tasks should be performed here
-    RenderHook::Shutdown();
+    ImGuiImpl::Shutdown();
     return TRUE;
 }
 
