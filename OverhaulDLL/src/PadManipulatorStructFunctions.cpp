@@ -119,21 +119,21 @@ std::string print_PadManipulator(PadManipulator* pad)
     out += std::format("chrManipulator.CurrentFrame_ActionInputs.lefthand_weapon_attack: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.lefthand_weapon_attack);
     out += std::format("chrManipulator.CurrentFrame_ActionInputs.parry_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.parry_input);
     out += std::format("chrManipulator.CurrentFrame_ActionInputs.block_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.block_input);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field22_0x16: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field22_0x16);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field23_0x17: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field23_0x17);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field24_0x18: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field24_0x18);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field25_0x19: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field25_0x19);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field26_0x1a: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field26_0x1a);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field27_0x1b: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field27_0x1b);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field28_0x1c: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field28_0x1c);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field29_0x1d: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field29_0x1d);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field30_0x1e: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field30_0x1e);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field31_0x1f: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field31_0x1f);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field32_0x20: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field32_0x20);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field33_0x21: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field33_0x21);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field34_0x22: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field34_0x22);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field35_0x23: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field35_0x23);
-    out += std::format("chrManipulator.CurrentFrame_ActionInputs.field36_0x24: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field36_0x24);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.beckon_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.beckon_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.point_forward_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.point_forward_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.hurrah_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.hurrah_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.bow_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.bow_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.joy_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.joy_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.shrug_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.shrug_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.wave_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.wave_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.praise_the_sun_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.praise_the_sun_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.point_up_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.point_up_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.point_down_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.point_down_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.look_skyward_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.look_skyward_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.well_what_is_it_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.well_what_is_it_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.prostration_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.prostration_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.proper_bow_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.proper_bow_emote_input);
+    out += std::format("chrManipulator.CurrentFrame_ActionInputs.prayer_emote_input: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.prayer_emote_input);
     out += std::format("chrManipulator.CurrentFrame_ActionInputs.field37_0x25: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field37_0x25);
     out += std::format("chrManipulator.CurrentFrame_ActionInputs.field38_0x26: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field38_0x26);
     out += std::format("chrManipulator.CurrentFrame_ActionInputs.field39_0x27: {}\n", pad->chrManipulator.CurrentFrame_ActionInputs.field39_0x27);
@@ -437,8 +437,8 @@ void PadManipulatorPacked_to_PadManipulator(PlayerIns* target, PadManipulatorPac
     to->chrManipulator.camera_x_direction_movement_input_amount_alt = from->camera_x_direction_movement_input_amount_alt;
     to->chrManipulator.camera_y_direction_movement_input_amount_alt = from->camera_y_direction_movement_input_amount_alt;
     to->chrManipulator.movement_velocity[0] = from->movement_velocity[0];
-    to->chrManipulator.movement_velocity[1] = from->movement_velocity[1]; 
-    to->chrManipulator.movement_velocity[2] = from->movement_velocity[2]; 
+    to->chrManipulator.movement_velocity[1] = from->movement_velocity[1];
+    to->chrManipulator.movement_velocity[2] = from->movement_velocity[2];
     to->chrManipulator.movement_velocity[3] = from->movement_velocity[3];
 
     //move the CurrentFrame_ActionInputs to the PrevFrame_ActionInputs
