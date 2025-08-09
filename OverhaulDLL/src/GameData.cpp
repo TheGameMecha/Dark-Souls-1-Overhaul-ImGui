@@ -20,7 +20,7 @@
 #include "FileReloading.h"
 #include "ModNetworking.h"
 #include "CustomInvasionTypes.h"
-
+#include "ImGui.h"
 
 /*
     Initialize static variables:
@@ -364,6 +364,7 @@ bool Game::on_character_load(void* unused)
         ConsoleWrite("First character loading finished");
 
         character_initial_load_run = true;
+        ImGuiImpl::SetVisibility(false);
     }
 
     //Triggered on event: a character has been loaded from the save menu, but not the first character loaded
@@ -387,6 +388,8 @@ bool Game::on_character_load(void* unused)
 
         ConsoleWrite("Character reload finished");
 
+        ImGuiImpl::SetVisibility(false);
+
         character_reload_run = true;
     }
 
@@ -400,6 +403,7 @@ bool Game::on_character_load(void* unused)
     if (character_initial_load_run == true && Game::get_main_menu_flag().has_value() && *Game::get_main_menu_flag().value() == 1)
     {
         character_initial_load_run = false;
+        ImGuiImpl::SetVisibility(false);
     }
 
     return true;

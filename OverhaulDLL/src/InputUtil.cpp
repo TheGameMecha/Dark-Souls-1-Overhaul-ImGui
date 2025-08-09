@@ -11,6 +11,7 @@
 #include "sp/memory/injection/asm/x64.h"
 #include "ModNetworking.h"
 #include "Rollback.h"
+#include "ImGui.h"
 
 namespace Input {
 
@@ -256,6 +257,12 @@ void handle_input(XINPUT_GAMEPAD* xold, XINPUT_GAMEPAD* xcurrent, DIJOYSTATE2* d
                 Mod::user_selected_default_mode = ModMode::Legacy;
                 ConsoleWrite("Set prefer Legacy mode");
             }
+        }
+
+        if(Button::pressed(kbold, kbcurrent, user_setting<uint8_t>(_DS1_OVERHAUL_KEYBINDS_SECTION_, _DS1_OVERHUAL_KEYBIND_TOGGLEIMGUI_, DIK_GRAVE).read()))
+        {
+            ConsoleWrite("Toggling ImGui");
+            ImGuiImpl::ToggleVisibility();
         }
 
         if (Button::pressed(kbold, kbcurrent, DIK_F8))

@@ -1,16 +1,13 @@
 #include "ImGui.h"
 #include "DarkSoulsOverhaulMod.h"
+#include "PlayerInsStruct.h"
 #include <thread>
 #include <chrono>
 
 ImGuiImpl::ImGuiImpl() {}
 
 bool ImGuiImpl::mIsSetup = false;
-
-// Raw Input
-GetRawInputData_t ImGuiImpl::OriginalGetRawInputData = nullptr;
-GetAsyncKeyState_t ImGuiImpl::OriginalGetAsyncKeyState = nullptr;
-GetCursorPos_t ImGuiImpl::OriginalGetCursorPos = nullptr;
+bool ImGuiImpl::mIsVisible = false;
 
 // D3D
 ID3D11DeviceContext* ImGuiImpl::context = nullptr;
@@ -21,18 +18,9 @@ PresentFn ImGuiImpl::oPresent = nullptr;
 HWND ImGuiImpl::g_hwnd = nullptr;
 WNDPROC ImGuiImpl::oWndProc = nullptr;
 
-// Input
-GetDeviceState_t ImGuiImpl::OriginalGetDeviceStateKeyboard = nullptr;
-GetDeviceState_t ImGuiImpl::OriginalGetDeviceStateMouse = nullptr;
-DirectInput8Create_t ImGuiImpl::OriginalDirectInput8Create = nullptr;
-CreateDevice_t ImGuiImpl::OriginalCreateDevice = nullptr;
-IDirectInputDevice8* ImGuiImpl::g_keyboardDevice = nullptr;
-IDirectInputDevice8* ImGuiImpl::g_mouseDevice = nullptr;
-GetDeviceData_t ImGuiImpl::OriginalGetDeviceDataKeyboard = nullptr;
-GetDeviceData_t ImGuiImpl::OriginalGetDeviceDataMouse = nullptr;
+// Game Specific
+PlayerIns* ImGuiImpl::mCurrentPlayerIns = nullptr;
 
-// XInput
-XInputGetState_t ImGuiImpl::OriginalXInputGetState = nullptr;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -97,20 +85,20 @@ IDXGISwapChain* ImGuiImpl::CreateDummySwapChain(HWND hwnd, ID3D11Device** outDev
     IDXGISwapChain* swap = nullptr;
 
     HRESULT hr = D3D11CreateDeviceAndSwapChain_t(d3d11::functions[d3d11::D3D11CreateDeviceAndSwapChain_i])
-    (
-        nullptr,
-        D3D_DRIVER_TYPE_HARDWARE,
-        nullptr,
-        0,
-        nullptr,
-        0,
-        D3D11_SDK_VERSION,
-        &sd,
-        &swap,
-        &device,
-        nullptr,
-        &context
-    );
+        (
+            nullptr,
+            D3D_DRIVER_TYPE_HARDWARE,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            D3D11_SDK_VERSION,
+            &sd,
+            &swap,
+            &device,
+            nullptr,
+            &context
+            );
 
     if (SUCCEEDED(hr))
     {
@@ -172,275 +160,65 @@ DWORD ImGuiImpl::HandleRenderHook()
     return 0;
 }
 
-/////////////////////////////////
-// INPUT HOOKS
-/////////////////////////////////
+static Step_FrpgMenuSys_FUNC* oStep_FrpgMenuSys = nullptr;
+static float FrpgMenuSysFrameTime = 0.0f;
 
-/// <summary>
-/// GetDeviceState Hook
-/// </summary>
-HRESULT STDMETHODCALLTYPE ImGuiImpl::HookedGetDeviceState(IDirectInputDevice8* pThis, DWORD cbData, LPVOID lpvData)
+static void HookedStep_FrpgMenuSys(void* frpgmenusys, float frametime)
 {
-    if (ImGuiImpl::WantCaptureInput())
-    {
-        ZeroMemory(lpvData, cbData);
-        return DI_OK;
-    }
-
-    // Determine if this is the keyboard or mouse device
-    if (pThis == g_keyboardDevice && OriginalGetDeviceStateKeyboard)
-    {
-        return OriginalGetDeviceStateKeyboard(pThis, cbData, lpvData);
-    }
-
-    if (pThis == g_mouseDevice && OriginalGetDeviceStateMouse)
-    {
-        return OriginalGetDeviceStateMouse(pThis, cbData, lpvData);
-    }
-
-    return DI_OK; // fallback
+    FrpgMenuSysFrameTime = frametime;
+    oStep_FrpgMenuSys(frpgmenusys, frametime);
 }
 
-/// <summary>
-/// GetDeviceData Hook
-/// </summary>
-HRESULT STDMETHODCALLTYPE ImGuiImpl::HookedGetDeviceData(IDirectInputDevice8* pThis, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
+static Step_InGameMenus_FUNC* oStep_InGameMenus = nullptr;
+static float InGameMenusFrameTime = 0.0f;
+
+static void HookedStep_InGameMenus(void* InGameMenuStep, float frametime, void* TaskItem)
 {
-    if (ImGuiImpl::WantCaptureInput())
-    {
-        if (pdwInOut)
-        {
-            *pdwInOut = 0;
-        }
-        return DI_OK;
-    }
-
-    if (pThis == g_keyboardDevice && OriginalGetDeviceDataKeyboard)
-    {
-        return OriginalGetDeviceDataKeyboard(pThis, cbObjectData, rgdod, pdwInOut, dwFlags);
-    }
-
-    if (pThis == g_mouseDevice && OriginalGetDeviceDataMouse)
-    {
-        return OriginalGetDeviceDataMouse(pThis, cbObjectData, rgdod, pdwInOut, dwFlags);
-    }
-
-    return DI_OK;
+    InGameMenusFrameTime = frametime;
+    oStep_InGameMenus(InGameMenuStep, frametime, TaskItem);
 }
 
-/// <summary>
-/// CreateDevice Hook
-/// </summary>
-HRESULT STDMETHODCALLTYPE ImGuiImpl::HookedCreateDevice(IDirectInput8* pThis, REFGUID rguid, IDirectInputDevice8** ppvOut, LPUNKNOWN pUnkOuter)
+static Step_MenuMan_And_MouseMan_FUNC* oStep_MenuMan_And_MouseMan = nullptr;
+static float MenuMan_And_MouseManFrameTime = 0.0f;
+
+static void HookedStep_MenuMan_And_MouseMan(float frametime)
 {
-    HRESULT hr = OriginalCreateDevice(pThis, rguid, ppvOut, pUnkOuter);
-
-    if (SUCCEEDED(hr))
-    {
-        if (rguid == GUID_SysKeyboard)
-        {
-            g_keyboardDevice = (IDirectInputDevice8*)*ppvOut;
-
-            void** vtable = *(void***)g_keyboardDevice;
-
-            void* getDeviceStateAddr = vtable[VTABLE_IDX::GET_DEVICE_STATE];
-            MH_CreateHook(getDeviceStateAddr, &HookedGetDeviceState, reinterpret_cast<void**>(&OriginalGetDeviceStateKeyboard));
-            MH_EnableHook(getDeviceStateAddr);
-
-            void* getDeviceDataAddr = vtable[VTABLE_IDX::GET_DEVICE_DATA];
-            MH_CreateHook(getDeviceDataAddr, &HookedGetDeviceData, reinterpret_cast<void**>(&OriginalGetDeviceDataKeyboard));
-            MH_EnableHook(getDeviceDataAddr);
-        }
-
-        if (rguid == GUID_SysMouse)
-        {
-            g_mouseDevice = (IDirectInputDevice8*)*ppvOut;
-            void** vtable = *(void***)g_mouseDevice;
-
-            void* getDeviceStateAddr = vtable[VTABLE_IDX::GET_DEVICE_STATE];
-            MH_CreateHook(getDeviceStateAddr, &HookedGetDeviceState, reinterpret_cast<void**>(&OriginalGetDeviceStateMouse));
-            MH_EnableHook(getDeviceStateAddr);
-
-            void* getDeviceDataAddr = vtable[VTABLE_IDX::GET_DEVICE_DATA];
-            MH_CreateHook(getDeviceDataAddr, &HookedGetDeviceData, reinterpret_cast<void**>(&OriginalGetDeviceDataMouse));
-            MH_EnableHook(getDeviceDataAddr);
-        }
-    }
-
-    return hr;
+    MenuMan_And_MouseManFrameTime = frametime;
+    oStep_MenuMan_And_MouseMan(frametime);
 }
 
-/// <summary>
-/// DirectInput8Create Hook
-/// </summary>
-HRESULT WINAPI ImGuiImpl::HookedDirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID* ppvOut, LPUNKNOWN punkOuter)
+DWORD ImGuiImpl::HandleGameHooks()
 {
-    HRESULT hr = OriginalDirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
-    if (SUCCEEDED(hr) && riidltf == IID_IDirectInput8)
+    std::vector<HookInfo> hooks =
     {
-        IDirectInput8* pDI8 = reinterpret_cast<IDirectInput8*>(*ppvOut);
+        { reinterpret_cast<void*>(Step_FrpgMenuSys), HookedStep_FrpgMenuSys, reinterpret_cast<void**>(&oStep_FrpgMenuSys), "Step_FrpgMenuSys"},
+        { reinterpret_cast<void*>(Step_InGameMenus), HookedStep_InGameMenus, reinterpret_cast<void**>(&oStep_InGameMenus), "Step_InGameMenus"},
+        { reinterpret_cast<void*>(Step_MenuMan_And_MouseMan), HookedStep_MenuMan_And_MouseMan, reinterpret_cast<void**>(&oStep_MenuMan_And_MouseMan), "Step_MenuMan_And_MouseMan"},
+    };
 
-        void** vtable = *(void***)pDI8;
-        void* createDeviceAddr = vtable[VTABLE_IDX::CREATE_DEVICE]; 
-
-        MH_CreateHook(createDeviceAddr, &HookedCreateDevice, reinterpret_cast<void**>(&OriginalCreateDevice));
-        MH_EnableHook(createDeviceAddr);
+    if (!HookFunctions(hooks)) {
+        return 1;
     }
-    return hr;
+    return 0;
 }
 
-/// <summary>
-/// AsyncKeyState Hook
-/// </summary>
-SHORT WINAPI ImGuiImpl::HookedGetAsyncKeyState(int vKey)
+bool ImGuiImpl::HookFunctions(const std::vector<HookInfo>& hooks)
 {
-    if (ImGuiImpl::WantCaptureInput())
-    {
-        return 0; // Pretend key is not pressed
+    for (auto& h : hooks) {
+        if (MH_CreateHook(h.target, h.detour, h.original) != MH_OK)
+        {
+            ConsoleWrite("Failed to create hook: %s", h.name);
+            return false;
+        }
+        if (MH_EnableHook(h.target) != MH_OK) {
+            ConsoleWrite("Failed to enable hook: %s", h.name);
+            return false;
+        }
+        ConsoleWrite("Hook installed: %s", h.name);
     }
-
-    return OriginalGetAsyncKeyState(vKey);
+    return true;
 }
 
-/// <summary>
-/// GetCursorPos Hook
-/// </summary>
-BOOL WINAPI ImGuiImpl::HookedGetCursorPos(LPPOINT lpPoint)
-{
-    if (ImGuiImpl::WantCaptureInput())
-    {
-        // Return a fake mouse position off-screen or frozen
-        lpPoint->x = -10000;
-        lpPoint->y = -10000;
-        return TRUE;
-    }
-
-    return OriginalGetCursorPos(lpPoint);
-}
-
-/// <summary>
-/// GetRawInputData Hook
-/// </summary>
-UINT WINAPI ImGuiImpl::HookedGetRawInputData(HRAWINPUT hRawInput, UINT uiCommand, LPVOID pData, PUINT pcbSize, UINT cbSizeHeader)
-{
-    if (ImGuiImpl::WantCaptureInput() && uiCommand == RID_INPUT && pData)
-    {
-        RAWINPUT* raw = (RAWINPUT*)pData;
-        if (raw->header.dwType == RIM_TYPEMOUSE || raw->header.dwType == RIM_TYPEKEYBOARD)
-        {
-            *pcbSize = 0;
-            return 0;
-        }
-    }
-
-    return OriginalGetRawInputData(hRawInput, uiCommand, pData, pcbSize, cbSizeHeader);
-}
-
-/// <summary>
-/// XInputGetState Hook
-/// </summary>
-DWORD WINAPI ImGuiImpl::HookedXInputGetState(DWORD dwUserIndex, XINPUT_STATE* pState)
-{
-    if (ImGuiImpl::WantCaptureInput())
-    {
-        ZeroMemory(pState, sizeof(XINPUT_STATE));
-        return ERROR_SUCCESS;
-    }
-
-    return OriginalXInputGetState(dwUserIndex, pState);
-}
-
-DWORD ImGuiImpl::HandleInputHook()
-{
-    ConsoleWrite("InputHook: Initializing Input Hook");
-
-    DWORD errorCode = 0;
-
-    // Get address of DirectInput8Create
-    HMODULE dinput8 = GetModuleHandleA("dinput8.dll");
-    if (!dinput8)
-    {
-        // dinput8.dll not loaded yet, wait for it
-        while (!(dinput8 = GetModuleHandleA("dinput8.dll")))
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    }
-
-    void* directInput8CreateAddr = GetProcAddress(dinput8, "DirectInput8Create");
-    if (directInput8CreateAddr)
-    {
-        MH_CreateHook(directInput8CreateAddr, &HookedDirectInput8Create, reinterpret_cast<void**>(&OriginalDirectInput8Create));
-        MH_EnableHook(directInput8CreateAddr);
-    }
-    else
-    {
-        errorCode = 1;
-    }
-
-    HMODULE user32 = GetModuleHandleA("user32.dll");
-    if (user32)
-    {
-        void* getRawInputDataAddr = GetProcAddress(user32, "GetRawInputData");
-        if (getRawInputDataAddr)
-        {
-            MH_CreateHook(getRawInputDataAddr, &HookedGetRawInputData, reinterpret_cast<void**>(&OriginalGetRawInputData));
-            MH_EnableHook(getRawInputDataAddr);
-            ConsoleWrite("InputHook: Successfully hooked GetRawInputData");
-        }
-        else
-        {
-            ConsoleWrite("InputHook: Failed to hook GetRawInputData");
-            errorCode = 1;
-        }
-
-        // Hook GetAsyncKeyState
-        void* getAsyncKeyStateAddr = GetProcAddress(user32, "GetAsyncKeyState");
-        if (getAsyncKeyStateAddr)
-        {
-            MH_CreateHook(getAsyncKeyStateAddr, &HookedGetAsyncKeyState, reinterpret_cast<void**>(&OriginalGetAsyncKeyState));
-            MH_EnableHook(getAsyncKeyStateAddr);
-            ConsoleWrite("InputHook: Successfully hooked GetAsyncKeyState");
-        }
-        else
-        {
-            ConsoleWrite("InputHook: Failed to hook GetAsyncKeyState");
-            errorCode = 1;
-        }
-
-        void* getCursorPosAddr = GetProcAddress(user32, "GetCursorPos");
-        if (getCursorPosAddr)
-        {
-            MH_CreateHook(getCursorPosAddr, &HookedGetCursorPos, reinterpret_cast<void**>(&OriginalGetCursorPos));
-            MH_EnableHook(getCursorPosAddr);
-            ConsoleWrite("InputHook: Successfully hooked GetCursorPos");
-        }
-        else
-        {
-            ConsoleWrite("InputHook: Failed to hook GetAsyncKeyState");
-            errorCode = 1;
-        }
-    }
-
-    HMODULE xinput = GetModuleHandleA("xinput1_3.dll");
-    if (xinput)
-    {
-        void* xinputAddr = GetProcAddress(xinput, "XInputGetState");
-        if (xinputAddr)
-        {
-            MH_CreateHook(xinputAddr, &HookedXInputGetState, reinterpret_cast<void**>(&OriginalXInputGetState));
-            MH_EnableHook(xinputAddr);
-            ConsoleWrite("InputHook: Successfully hooked XInputGetState");
-        }
-        else
-        {
-            ConsoleWrite("InputHook: Failed to hook XInputGetState");
-            errorCode = 1;
-        }
-    }
-
-    return errorCode;
-}
 
 /////////////////////////////////
 // MAIN SETUP
@@ -460,9 +238,9 @@ DWORD WINAPI ImGuiImpl::InitThread(LPVOID)
         return 1;
     }
 
-    if (HandleInputHook() != 0)
+    if (HandleGameHooks() != 0)
     {
-        ConsoleWrite("ImGui: InputHook setup failed");
+        ConsoleWrite("ImGui: GameHook setup failed");
         return 1;
     }
 
@@ -479,7 +257,7 @@ void ImGuiImpl::Initialize()
 
 void ImGuiImpl::SetupImGui(IDXGISwapChain* swapChain, ID3D11Device* device)
 {
-    ConsoleWrite("Performing ImGui Setup");
+    ConsoleWrite("ImGui: Performing Setup");
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -514,18 +292,232 @@ void ImGuiImpl::SetupImGui(IDXGISwapChain* swapChain, ID3D11Device* device)
     mIsSetup = true;
 }
 
+ChrManipulator_ActionInputted CurFrameActionInputs;
+static std::unordered_map<std::string, InputHistory> g_InputHistory;
+static int g_FrameCounter = 0;
+
+auto BoolText = [](const char* label, bool value)
+    {
+        ImGui::TextColored(value ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f)  // Green if true
+            : ImVec4(1.0f, 0.0f, 0.0f, 1.0f), // Red if false
+            "%s: %s", label, value ? "true" : "false");
+    };
+
+void BoolTextWithHistory(const char* label, bool value)
+{
+    const auto& hist = g_InputHistory[label];
+    ImVec4 col = value ? ImVec4(0, 1, 0, 1) : ImVec4(1, 0, 0, 1);
+
+    if (hist.lastPressedFrame >= 0)
+        ImGui::TextColored(col, "%s: %s (last pressed %d frames ago)",
+            label, value ? "true" : "false",
+            g_FrameCounter - hist.lastPressedFrame);
+    else
+        ImGui::TextColored(col, "%s: %s (never pressed)",
+            label, value ? "true" : "false");
+}
+
+#define DRAW_INPUT(name) BoolTextWithHistory(#name, CurFrameActionInputs.name)
+void UpdateInputHistory(const char* name, bool isDown)
+{
+    auto& hist = g_InputHistory[name];
+    if (isDown && !hist.wasDownLastFrame)
+    {
+        hist.lastPressedFrame = g_FrameCounter; // record moment it was pressed
+    }
+    hist.wasDownLastFrame = isDown;
+}
+#define UPDATE_INPUT(name) UpdateInputHistory(#name, CurFrameActionInputs.name)
+
+void UpdateAllInputHistory()
+{
+    // Attacks
+    UPDATE_INPUT(r1_weapon_attack_input_1);
+    UPDATE_INPUT(r1_weapon_attack_input_2);
+    UPDATE_INPUT(l1_weapon_attack);
+    UPDATE_INPUT(l2_weapon_attack);
+    UPDATE_INPUT(lefthand_weapon_attack);
+    UPDATE_INPUT(r1_magic_attack_input);
+    UPDATE_INPUT(l1_magic_attack_input);
+    UPDATE_INPUT(r2_input);
+
+    // Defense / Utility
+    UPDATE_INPUT(l1_input);
+    UPDATE_INPUT(parry_input);
+    UPDATE_INPUT(block_input);
+    UPDATE_INPUT(use_ButtonPressed);
+
+    // Movement
+    UPDATE_INPUT(backstep_input);
+    UPDATE_INPUT(roll_forward_input);
+    UPDATE_INPUT(jump_input);
+
+    // Emotes
+    UPDATE_INPUT(beckon_emote_input);
+    UPDATE_INPUT(point_forward_emote_input);
+    UPDATE_INPUT(hurrah_emote_input);
+    UPDATE_INPUT(bow_emote_input);
+    UPDATE_INPUT(joy_emote_input);
+    UPDATE_INPUT(wave_emote_input);
+    UPDATE_INPUT(point_up_emote_input);
+    UPDATE_INPUT(point_down_emote_input);
+    UPDATE_INPUT(well_what_is_it_emote_input);
+    UPDATE_INPUT(prostration_emote_input);
+    UPDATE_INPUT(proper_bow_emote_input);
+    UPDATE_INPUT(prayer_emote_input);
+    UPDATE_INPUT(shrug_emote_input);
+    UPDATE_INPUT(praise_the_sun_emote_input);
+    UPDATE_INPUT(look_skyward_emote_input);
+
+    // Unknowns
+    UPDATE_INPUT(field4_0x4);
+    UPDATE_INPUT(field6_0x6);
+    UPDATE_INPUT(field8_0x8);
+    UPDATE_INPUT(field9_0x9);
+    UPDATE_INPUT(field11_0xb);
+    UPDATE_INPUT(field12_0xc);
+    UPDATE_INPUT(field13_0xd);
+    UPDATE_INPUT(field16_0x10);
+    UPDATE_INPUT(field17_0x11);
+    UPDATE_INPUT(field18_0x12);
+    UPDATE_INPUT(field37_0x25);
+    UPDATE_INPUT(field38_0x26);
+    UPDATE_INPUT(field39_0x27);
+    UPDATE_INPUT(field40_0x28);
+    UPDATE_INPUT(field41_0x29);
+    UPDATE_INPUT(field43_0x2b);
+    UPDATE_INPUT(field44_0x2c);
+    UPDATE_INPUT(field45_0x2d);
+    UPDATE_INPUT(field46_0x2e);
+    UPDATE_INPUT(field47_0x2f);
+    UPDATE_INPUT(field48_0x30);
+    UPDATE_INPUT(field49_0x31);
+    UPDATE_INPUT(field50_0x32);
+}
+
+void DrawInputDebugUI()
+{
+    // Attacks
+    DRAW_INPUT(r1_weapon_attack_input_1);
+    DRAW_INPUT(r1_weapon_attack_input_2);
+    DRAW_INPUT(l1_weapon_attack);
+    DRAW_INPUT(l2_weapon_attack);
+    DRAW_INPUT(lefthand_weapon_attack);
+    DRAW_INPUT(r1_magic_attack_input);
+    DRAW_INPUT(l1_magic_attack_input);
+    DRAW_INPUT(r2_input);
+
+    // Defense / Utility
+    DRAW_INPUT(l1_input);
+    DRAW_INPUT(parry_input);
+    DRAW_INPUT(block_input);
+    DRAW_INPUT(use_ButtonPressed);
+
+    // Movement
+    DRAW_INPUT(backstep_input);
+    DRAW_INPUT(roll_forward_input);
+    DRAW_INPUT(jump_input);
+
+    // Emotes
+    DRAW_INPUT(beckon_emote_input);
+    DRAW_INPUT(point_forward_emote_input);
+    DRAW_INPUT(hurrah_emote_input);
+    DRAW_INPUT(bow_emote_input);
+    DRAW_INPUT(joy_emote_input);
+    DRAW_INPUT(wave_emote_input);
+    DRAW_INPUT(point_up_emote_input);
+    DRAW_INPUT(point_down_emote_input);
+    DRAW_INPUT(well_what_is_it_emote_input);
+    DRAW_INPUT(prostration_emote_input);
+    DRAW_INPUT(proper_bow_emote_input);
+    DRAW_INPUT(prayer_emote_input);
+    DRAW_INPUT(shrug_emote_input);
+    DRAW_INPUT(praise_the_sun_emote_input);
+    DRAW_INPUT(look_skyward_emote_input);
+
+    // Unknowns
+    DRAW_INPUT(field4_0x4);
+    DRAW_INPUT(field6_0x6);
+    DRAW_INPUT(field8_0x8);
+    DRAW_INPUT(field9_0x9);
+    DRAW_INPUT(field11_0xb);
+    DRAW_INPUT(field12_0xc);
+    DRAW_INPUT(field13_0xd);
+    DRAW_INPUT(field16_0x10);
+    DRAW_INPUT(field17_0x11);
+    DRAW_INPUT(field18_0x12);
+    DRAW_INPUT(field37_0x25);
+    DRAW_INPUT(field38_0x26);
+    DRAW_INPUT(field39_0x27);
+    DRAW_INPUT(field40_0x28);
+    DRAW_INPUT(field41_0x29);
+    DRAW_INPUT(field43_0x2b);
+    DRAW_INPUT(field44_0x2c);
+    DRAW_INPUT(field45_0x2d);
+    DRAW_INPUT(field46_0x2e);
+    DRAW_INPUT(field47_0x2f);
+    DRAW_INPUT(field48_0x30);
+    DRAW_INPUT(field49_0x31);
+    DRAW_INPUT(field50_0x32);
+}
+
 void ImGuiImpl::Update()
 {
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+    mIsVisible = true;
+    bool okToEnterEquipmentScreen = false;
 
-    // @TODO: add some sort of processing for handling new imgui windows
-    ImGui::ShowDemoWindow();
-
-    if (ImGuiImpl::WantCaptureInput()) // not sure this really works - I think Dark Souls is also setting this constantly
+    if (Game::world_chr_man_imp)
     {
-        while (ShowCursor(TRUE) < 0);
+        auto playerIns_o = Game::get_PlayerIns();
+        if (playerIns_o && playerIns_o != std::nullopt && playerIns_o.has_value())
+        {
+            mCurrentPlayerIns = (PlayerIns*)playerIns_o.value();
+            if (mCurrentPlayerIns)
+            {
+                okToEnterEquipmentScreen = ok_to_enter_equipment_menu(mCurrentPlayerIns);
+            }
+        }
+    }
+
+    if (mIsVisible)
+    {
+        // @TODO: add some sort of processing for handling new imgui windows
+        if (ImGui::Begin("DARK SOULS OVERHAUL MOD"))
+        {
+            ImGui::Text("MenuSys:               FrameTime: %f ms", FrpgMenuSysFrameTime);
+            ImGui::Text("InGameMenus:           FrameTime: %f ms", InGameMenusFrameTime);
+            ImGui::Text("MenuMan_And_MouseMan:  FrameTime: %f ms", MenuMan_And_MouseManFrameTime);
+            ImGui::Text("OkToEnterEquipmentScreen: %s", okToEnterEquipmentScreen ? "true" : "false");
+        }
+
+        FrpgMenuSysFrameTime = 0.0f;
+        InGameMenusFrameTime = 0.0f;
+        MenuMan_And_MouseManFrameTime = 0.0f;
+
+        ImGui::End();
+
+        if (ImGui::Begin("Action Input Debug"))
+        {
+            if (!mCurrentPlayerIns)
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Current Player Not Loaded");
+                g_FrameCounter = -1;
+                g_InputHistory.clear();
+            }
+            else
+            {
+                CurFrameActionInputs = mCurrentPlayerIns->chrins.padManipulator->chrManipulator.CurrentFrame_ActionInputs;
+
+                UpdateAllInputHistory();
+                DrawInputDebugUI();
+                g_FrameCounter++;
+            }
+        }
+
+        ImGui::End();
     }
 
     ImGui::Render();
@@ -546,11 +538,21 @@ void ImGuiImpl::Shutdown()
 
 bool ImGuiImpl::WantCaptureInput()
 {
-    if (mIsSetup)
+    if (mIsSetup && mIsVisible)
     {
         ImGuiIO& io = ImGui::GetIO();
         return io.WantCaptureMouse || io.WantCaptureKeyboard || io.WantTextInput;
     }
 
     return false;
+}
+
+void ImGuiImpl::ToggleVisibility()
+{
+    mIsVisible = !mIsVisible;
+}
+
+void ImGuiImpl::SetVisibility(bool newVisibility)
+{
+    mIsVisible = newVisibility;
 }

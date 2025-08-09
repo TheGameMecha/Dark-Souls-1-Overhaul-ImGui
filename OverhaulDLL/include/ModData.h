@@ -36,6 +36,7 @@
 #define _DS1_OVERHAUL_KEYBIND_OVERHAULMODE_HOST_CONNECT_ "ToggleAllowConnectOverhaulModeHost"
 #define _DS1_OVERHAUL_KEYBIND_NONMOD_GUEST_CONNECT_ "ToggleAllowConnectNonModGuest"
 #define _DS1_OVERHAUL_KEYBIND_TOGGLEMODE_ "ChangeMode"
+#define _DS1_OVERHUAL_KEYBIND_TOGGLEIMGUI_ "ToggleImGui"
 
 #define _DS1_OVERHAUL_SETTINGS_STRING_BUFF_LEN_ 256  // Length of the string buffer used when obtaining user preference-related string data
 
