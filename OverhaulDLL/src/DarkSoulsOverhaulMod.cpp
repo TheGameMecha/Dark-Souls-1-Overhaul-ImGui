@@ -31,7 +31,7 @@
 #include "Rollback.h"
 #include "PlayerVisualsValidationFix.h"
 #include "ServerMonitor.h"
-#include "ImGui.h"
+#include "ImGuiImpl.h"
 
 HMODULE d3d11_module;
 FILE* logfile = NULL;

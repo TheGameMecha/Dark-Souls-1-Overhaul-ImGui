@@ -48,7 +48,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\ImGui.cpp" />
+    <ClCompile Include="src\ImGui\ImGuiCharacterInfo.cpp" />
+    <ClCompile Include="src\ImGui\ImGuiImpl.cpp" />
     <ClCompile Include="src\PadManipulatorStructFunctions.cpp" />
     <ClCompile Include="src\InvisibleBackstabAttackFix.cpp" />
     <ClCompile Include="src\MainLoop.cpp" />
@@ -91,7 +92,8 @@
     <ClInclude Include="include\FixAnkles.h" />
     <ClInclude Include="include\FrpgHavokManImpStruct.h" />
     <ClInclude Include="include\FrpgHavokManImpStructFunctions.h" />
-    <ClInclude Include="include\ImGui.h" />
+    <ClInclude Include="include\ImGui\ImGuiCharacterInfo.h" />
+    <ClInclude Include="include\ImGui\ImGuiImpl.h" />
     <ClInclude Include="include\InvisibleBackstabAttackFix.h" />
     <ClInclude Include="include\MainLoop.h" />
     <ClInclude Include="include\ModNetworking.h" />
@@ -250,7 +252,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;DARKSOULSOVERHAULMOD_EXPORTS;WRAPPER_ON_PROCESS_ATTACH=on_process_attach;WRAPPER_ON_PROCESS_DETACH=on_process_detach;WRAPPER_ON_THREAD_ATTACH=on_thread_attach;WRAPPER_ON_THREAD_DETACH=on_thread_detach;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>lib/MinHook/include;include;lib/Cpp-Utilities/include;lib/Dark-Souls-Game-Files-Lib/include;lib;d3d11-wrapper/include;d3d11-wrapper/lib;d3d11-wrapper/lib/inih;d3d11-wrapper/lib/inih/cpp;lib/StackWalker/include;ui;lib/Google-Cloud-Cpp/include;lib/steam;lib/ggpo_steamapi/src/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>lib/imgui;include/ImGui;lib/MinHook/include;include;lib/Cpp-Utilities/include;lib/Dark-Souls-Game-Files-Lib/include;lib;d3d11-wrapper/include;d3d11-wrapper/lib;d3d11-wrapper/lib/inih;d3d11-wrapper/lib/inih/cpp;lib/StackWalker/include;ui;lib/Google-Cloud-Cpp/include;lib/steam;lib/ggpo_steamapi/src/include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <DisableSpecificWarnings>26812;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
@@ -274,7 +276,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>DEBUG;DARKSOULSOVERHAULMOD_EXPORTS;WRAPPER_ON_PROCESS_ATTACH=on_process_attach;WRAPPER_ON_PROCESS_DETACH=on_process_detach;WRAPPER_ON_THREAD_ATTACH=on_thread_attach;WRAPPER_ON_THREAD_DETACH=on_thread_detach;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>lib/MinHook/include;include;lib/Cpp-Utilities/include;lib/Dark-Souls-Game-Files-Lib/include;lib;d3d11-wrapper/include;d3d11-wrapper/lib;d3d11-wrapper/lib/inih;d3d11-wrapper/lib/inih/cpp;lib/StackWalker/include;ui;lib/Google-Cloud-Cpp/include;lib/steam;lib/ggpo_steamapi/src/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>lib/imgui;include/ImGui;lib/MinHook/include;include;lib/Cpp-Utilities/include;lib/Dark-Souls-Game-Files-Lib/include;lib;d3d11-wrapper/include;d3d11-wrapper/lib;d3d11-wrapper/lib/inih;d3d11-wrapper/lib/inih/cpp;lib/StackWalker/include;ui;lib/Google-Cloud-Cpp/include;lib/steam;lib/ggpo_steamapi/src/include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>

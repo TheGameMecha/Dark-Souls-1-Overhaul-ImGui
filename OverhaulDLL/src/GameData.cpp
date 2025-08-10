@@ -20,7 +20,7 @@
 #include "FileReloading.h"
 #include "ModNetworking.h"
 #include "CustomInvasionTypes.h"
-#include "ImGui.h"
+#include "ImGuiImpl.h"
 
 /*
     Initialize static variables:

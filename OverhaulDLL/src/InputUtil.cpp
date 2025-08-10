@@ -11,7 +11,7 @@
 #include "sp/memory/injection/asm/x64.h"
 #include "ModNetworking.h"
 #include "Rollback.h"
-#include "ImGui.h"
+#include "ImGuiImpl.h"
 
 namespace Input {
 

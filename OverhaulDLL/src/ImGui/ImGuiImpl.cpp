@@ -1,4 +1,4 @@
-#include "ImGui.h"
+#include "ImGuiImpl.h"
 #include "DarkSoulsOverhaulMod.h"
 #include "PlayerInsStruct.h"
 #include <thread>
@@ -296,14 +296,8 @@ ChrManipulator_ActionInputted CurFrameActionInputs;
 static std::unordered_map<std::string, InputHistory> g_InputHistory;
 static int g_FrameCounter = 0;
 
-auto BoolText = [](const char* label, bool value)
-    {
-        ImGui::TextColored(value ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f)  // Green if true
-            : ImVec4(1.0f, 0.0f, 0.0f, 1.0f), // Red if false
-            "%s: %s", label, value ? "true" : "false");
-    };
 
-void BoolTextWithHistory(const char* label, bool value)
+static void BoolTextWithHistory(const char* label, bool value)
 {
     const auto& hist = g_InputHistory[label];
     ImVec4 col = value ? ImVec4(0, 1, 0, 1) : ImVec4(1, 0, 0, 1);
@@ -318,7 +312,7 @@ void BoolTextWithHistory(const char* label, bool value)
 }
 
 #define DRAW_INPUT(name) BoolTextWithHistory(#name, CurFrameActionInputs.name)
-void UpdateInputHistory(const char* name, bool isDown)
+static void UpdateInputHistory(const char* name, bool isDown)
 {
     auto& hist = g_InputHistory[name];
     if (isDown && !hist.wasDownLastFrame)
