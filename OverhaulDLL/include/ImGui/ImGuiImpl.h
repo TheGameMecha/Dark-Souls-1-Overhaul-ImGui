@@ -7,14 +7,11 @@
 
 #pragma once
 
-#ifndef IMGUI_H
-#define IMGUI_H
+#ifndef IMGUI_IMPL_H
+#define IMGUI_IMPL_H
 
+#include "ImGuiTypes.h"
 #include "d3d11/main.h"
-#include "imgui/imgui.h"
-#include "imgui/backends/imgui_impl_win32.h"
-#include "imgui/backends/imgui_impl_dx11.h"
-#include "MinHook.h"
 
 #include <vector>
 #include <unordered_map>
@@ -30,12 +27,6 @@ struct HookInfo {
     void* detour;       // Hooked function
     void** original;    // Where MinHook stores the original function
     const char* name;   // Optional: for logging
-};
-
-struct InputHistory
-{
-    int lastPressedFrame = -1;   // Frame number when last pressed
-    bool wasDownLastFrame = false;
 };
 
 /////////////////////////////////
@@ -63,7 +54,7 @@ public:
 
     static void Initialize();
     static void SetupImGui(IDXGISwapChain* swapChain, ID3D11Device* device);
-    static void Update();
+    static void DrawWindow();
     static void Shutdown();
 
     static bool WantCaptureInput();
@@ -100,5 +91,5 @@ private:
     static PlayerIns* mCurrentPlayerIns;
 };
 
-#endif // IMGUI_H
+#endif // IMGUI_IMPL_H
 
