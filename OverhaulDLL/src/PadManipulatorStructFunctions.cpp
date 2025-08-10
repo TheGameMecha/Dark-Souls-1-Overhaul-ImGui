@@ -437,8 +437,8 @@ void PadManipulatorPacked_to_PadManipulator(PlayerIns* target, PadManipulatorPac
     to->chrManipulator.camera_x_direction_movement_input_amount_alt = from->camera_x_direction_movement_input_amount_alt;
     to->chrManipulator.camera_y_direction_movement_input_amount_alt = from->camera_y_direction_movement_input_amount_alt;
     to->chrManipulator.movement_velocity[0] = from->movement_velocity[0];
-    to->chrManipulator.movement_velocity[1] = from->movement_velocity[1]; 
-    to->chrManipulator.movement_velocity[2] = from->movement_velocity[2]; 
+    to->chrManipulator.movement_velocity[1] = from->movement_velocity[1];
+    to->chrManipulator.movement_velocity[2] = from->movement_velocity[2];
     to->chrManipulator.movement_velocity[3] = from->movement_velocity[3];
 
     //move the CurrentFrame_ActionInputs to the PrevFrame_ActionInputs
