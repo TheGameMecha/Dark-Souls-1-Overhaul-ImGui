@@ -39,7 +39,7 @@ static void UpdateInputHistory(const char* name, bool isDown)
 }
 #define UPDATE_INPUT(name) UpdateInputHistory(#name, CurFrameActionInputs.name)
 
-void UpdateAllInputHistory()
+void ImGuiCharacterInfo::UpdateAllInputHistory()
 {
     // Attacks
     UPDATE_INPUT(r1_weapon_attack_input_1);
@@ -105,7 +105,7 @@ void UpdateAllInputHistory()
     UPDATE_INPUT(field50_0x32);
 }
 
-void DrawInputDebugUI()
+void ImGuiCharacterInfo::DrawInputDebugUI()
 {
     // Attacks
     DRAW_INPUT(r1_weapon_attack_input_1);

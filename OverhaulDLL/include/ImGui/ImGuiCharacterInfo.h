@@ -20,6 +20,10 @@ public:
     static void DrawWindow();
     static void ToggleWindow();
 
+protected:
+    static void UpdateAllInputHistory();
+    static void DrawInputDebugUI();
+
 private:
     static PlayerIns* mCurrentPlayerIns;
     static bool mIsOpen;
