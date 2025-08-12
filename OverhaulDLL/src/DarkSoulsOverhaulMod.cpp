@@ -32,6 +32,7 @@
 #include "PlayerVisualsValidationFix.h"
 #include "ServerMonitor.h"
 #include "ImGuiImpl.h"
+#include <LuaHook.h>
 
 HMODULE d3d11_module;
 FILE* logfile = NULL;
@@ -135,7 +136,13 @@ BOOL on_process_attach(HMODULE h_module, LPVOID lp_reserved)
     // start callback handler
     MainLoop::start();
 
+    if (MH_Initialize() != MH_OK)
+    {
+        ConsoleWrite("MinHook setup failed");
+    }
+
     ImGuiImpl::Initialize();
+    LuaHook::Initialize();
 
 #ifndef DEBUG
     set_crash_handlers();

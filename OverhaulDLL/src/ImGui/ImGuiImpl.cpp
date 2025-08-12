@@ -229,12 +229,6 @@ bool ImGuiImpl::HookFunctions(const std::vector<HookInfo>& hooks)
 
 DWORD WINAPI ImGuiImpl::InitThread(LPVOID)
 {
-    if (MH_Initialize() != MH_OK)
-    {
-        ConsoleWrite("ImGui: MinHook setup failed");
-        return 1;
-    }
-
     if (HandleRenderHook() != 0)
     {
         ConsoleWrite("ImGui: RenderHook setup failed");

@@ -4,6 +4,7 @@
 #include "ImGuiTypes.h"
 
 #include <unordered_map>
+#include <GameData.h>
 
 PlayerIns* ImGuiCharacterInfo::mCurrentPlayerIns = nullptr;
 bool ImGuiCharacterInfo::mIsOpen = false;
@@ -173,7 +174,7 @@ void ImGuiCharacterInfo::DrawInputDebugUI()
 
 void ImGuiCharacterInfo::DrawWindow()
 {
-    if(mIsOpen)
+    if (mIsOpen)
     {
         if (ImGui::Begin("Action Input Debug##CharacterInfo", &mIsOpen))
         {
@@ -182,6 +183,15 @@ void ImGuiCharacterInfo::DrawWindow()
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Current Player Not Loaded");
                 g_FrameCounter = -1;
                 g_InputHistory.clear();
+
+                if (Game::world_chr_man_imp)
+                {
+                    auto playerIns_o = Game::get_PlayerIns();
+                    if (playerIns_o && playerIns_o != std::nullopt && playerIns_o.has_value())
+                    {
+                        mCurrentPlayerIns = (PlayerIns*)playerIns_o.value();
+                    }
+                }
             }
             else
             {
